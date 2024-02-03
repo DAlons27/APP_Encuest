@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from model.user_connection import UserConnection
-from schema.user_schema import UserSchema, UserLogin
-from auth.auth import authenticate_user
+from schema.user_schema import UserSchema
 
 app = FastAPI()
 conn = UserConnection()
@@ -52,11 +51,3 @@ def insert(user_data:UserSchema):
 #def login(user_data:UserLogin):
 #    data = user_data.model_dump()
 
- # Después de insertar el usuario, generamos un token JWT y lo devolvemos
-
- # Después de insertar el usuario, generamos un token JWT y lo devolvemos
-    
-@app.post("/api/login", response_model=dict)
-def login(user_login:UserLogin):
-    user = authenticate_user(conn, user_login.id_usuario, user_login.password)
-    return user
