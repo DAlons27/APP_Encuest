@@ -3,6 +3,7 @@
 import psycopg
 
 class UserConnection():
+    # clase para la conexion con la base de datos
     conn = None
     # atributo
     
@@ -18,7 +19,7 @@ class UserConnection():
             # cierra la base de datos en caso de error
 
     def read_all(self):
-        #Lo usare para visualizar la informacio de registro del usuario(s), pero tambien puede servir para mostrar las encuestas activas
+        #Lo usare para visualizar la informacion de todos los usuarios
         with self.conn.cursor() as cur:
             data = cur.execute("""
                 SELECT * FROM "user"
@@ -26,6 +27,8 @@ class UserConnection():
             return data.fetchall()
         
     def read_one(self, id_usuario):
+        #Lo usare para visualizar la informacion de un usuario en especifico
+        # MOSTRAR UN USUARIO
         with self.conn.cursor() as cur:
             data = cur.execute("""
                 SELECT * FROM "user" WHERE id_usuario = %s
@@ -34,7 +37,7 @@ class UserConnection():
             return data.fetchone()
        
     def write(self, data):
-        #Registro del usuario
+        #REGISTRO DEL USUARIO
         with self.conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO "user"(id_usuario, name, lastname, age, email, password) VALUES(%(id_usuario)s, %(name)s, %(lastname)s, %(age)s, %(email)s, %(password)s)
@@ -44,14 +47,34 @@ class UserConnection():
 
     def authenticate_user(self, id_usuario: str, password: str):
         #Autenticacion del usuario para el login con JWT
+        # LOGIN DEL USUARIO
         with self.conn.cursor() as cur:
             cur.execute("""
                 SELECT * FROM "user" WHERE id_usuario = %s AND password = %s
             """, (id_usuario, password))
             return cur.fetchone()
 
+    def get_user_encuestas(self, id_usuario: int):
+        #Obtener las encuestas asociadas a un usuario, solo el campo titulo
+        # MIS ENCUESTAS
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT titulo FROM encuestas WHERE id_usuario = %s
+            """, (id_usuario,))
+            encuestas = cur.fetchall()
+        return encuestas
+    
+    def get_all_encuestas(self):
+        #Obtener todas las encuestas, solo el campo titulo
+        # TODAS LAS ENCUESTAS
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT titulo FROM "encuestas"
+            """)
+            encuestas = cur.fetchall()
+        return encuestas
+
     def __def__(self):
-        # destructor
+        # esta funcion se ejecuta al finalizar el programa o al cerrar la conexion con la base de datos 
 
         self.conn.close()
-

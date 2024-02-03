@@ -17,7 +17,9 @@ def verify_token(token: str):
 
 def authenticate_user(db: UserConnection, username: str, password: str):
     user = db.authenticate_user(username, password)
-    if user:
+    print("User from authenticate_user:", user)
+    
+    if user and user[5] == password:  # Ajustar el índice según la posición de la contraseña en tu tupla
         token_data = {"sub": user[0]}
         token = create_jwt_token(token_data)
         return {"token": token}
