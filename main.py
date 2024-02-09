@@ -4,10 +4,27 @@ from schema.user_schema import UserSchema, UserLogin
 from auth.auth import authenticate_user
 from fastapi.security import OAuth2PasswordBearer
 
+from fastapi.middleware.cors import CORSMiddleware
+from schema.user_schema import EncuestaCreateSchema
+
 app = FastAPI()
 conn = UserConnection()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 global_token = None
+
+# Configuración de CORS
+origins = [
+    "http://localhost",
+    "http://localhost:8000",  # Agrega aquí las URL de tus clientes front-end permitidos
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Usare este para LOGEAR un usuario    
 @app.post("/api/login", response_model=dict)
@@ -81,3 +98,16 @@ def get_user_encuestas(id_usuario: int):
     encuestas = conn.get_user_encuestas(id_usuario)
 
     return encuestas
+
+# Usar este para REGISTRAR una encuesta con preguntas y opciones
+@app.post("/api/user/{id_usuario}/encuestas")
+def create_encuesta(id_usuario: int, encuesta_data: EncuestaCreateSchema):
+    # Verificar si el usuario existe
+    user_data = conn.read_one(id_usuario)
+    if not user_data:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Crear la encuesta, preguntas y opciones usando la conexión a la base de datos
+    conn.create_encuesta(id_usuario, encuesta_data.titulo, encuesta_data.descripcion, encuesta_data.fecha_creacion, encuesta_data.fecha_fin, encuesta_data.preguntas)
+
+    return {"message": "Encuesta creada exitosamente"}

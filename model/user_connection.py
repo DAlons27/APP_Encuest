@@ -1,4 +1,7 @@
 # Conexion a la base datos
+from typing import List
+from schema.user_schema import PreguntaSchema
+
 
 import psycopg
 
@@ -73,6 +76,37 @@ class UserConnection():
             """)
             encuestas = cur.fetchall()
         return encuestas
+    
+
+
+
+    def create_encuesta(self, id_usuario: int, titulo: str, descripcion: str, fecha_creacion: str, fecha_fin: str, preguntas: List[PreguntaSchema]):
+        # Crear una nueva encuesta
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO encuestas(id_usuario, titulo, descripcion, fecha_creacion, fecha_fin)
+                VALUES (%s, %s, %s, %s, %s) RETURNING id_encuestas
+            """, (id_usuario, titulo, descripcion, fecha_creacion, fecha_fin))
+            id_encuesta = cur.fetchone()[0]
+
+            # Insertar preguntas y opciones asociadas
+            for pregunta_data in preguntas:
+                cur.execute("""
+                    INSERT INTO preguntas(id_encuestas, preguntas)
+                    VALUES (%s, %s) RETURNING id_preguntas
+                """, (id_encuesta, pregunta_data.pregunta))
+                id_pregunta = cur.fetchone()[0]
+
+                for opcion_data in pregunta_data.opciones:
+                    cur.execute("""
+                        INSERT INTO opciones(id_preguntas, opciones)
+                        VALUES (%s, %s) 
+                    """, (id_pregunta, opcion_data.opcion_texto))
+
+            self.conn.commit() 
+    
+
+
 
     def __def__(self):
         # esta funcion se ejecuta al finalizar el programa o al cerrar la conexion con la base de datos 
