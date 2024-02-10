@@ -62,17 +62,17 @@ class UserConnection():
         # MIS ENCUESTAS
         with self.conn.cursor() as cur:
             cur.execute("""
-                SELECT titulo FROM encuestas WHERE id_usuario = %s
+                SELECT titulo, descripcion FROM encuestas WHERE id_usuario = %s
             """, (id_usuario,))
             encuestas = cur.fetchall()
         return encuestas
     
     def get_all_encuestas(self):
-        #Obtener todas las encuestas, solo el campo titulo
+        #Obtener todas las encuestas, solo el campo titulo y descripcion
         # TODAS LAS ENCUESTAS
         with self.conn.cursor() as cur:
             cur.execute("""
-                SELECT titulo FROM "encuestas"
+                SELECT titulo, descripcion FROM "encuestas" 
             """)
             encuestas = cur.fetchall()
         return encuestas
