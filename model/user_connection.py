@@ -31,7 +31,7 @@ class UserConnection():
         
     def read_one(self, id_usuario):
         #Lo usare para visualizar la informacion de un usuario en especifico
-        # MOSTRAR UN USUARIO
+
         with self.conn.cursor() as cur:
             data = cur.execute("""
                 SELECT * FROM "user" WHERE id_usuario = %s
@@ -77,9 +77,6 @@ class UserConnection():
             encuestas = cur.fetchall()
         return encuestas
     
-
-
-
     def create_encuesta(self, id_usuario: int, titulo: str, descripcion: str, fecha_creacion: str, fecha_fin: str, preguntas: List[PreguntaSchema]):
         # Crear una nueva encuesta
         with self.conn.cursor() as cur:
@@ -106,7 +103,66 @@ class UserConnection():
             self.conn.commit() 
     
 
+#Voy a crear 2 funciones para obtener las encuestas detalladas asociadas a un usuario
+#La primera funcion, me dara como salida todas las encuestas asociadas a un usuario, con sus preguntas, opciones y respuesta del usuario
+#Podria usarse en el front para mostrar las encuestas asociadas a un usuario que han sido respondidas
 
+    def get_user_encuestas_detalladas(self, id_usuario: int):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                        encuestas.titulo, 
+                        encuestas.descripcion, 
+                        preguntas.preguntas, 
+                        opciones.opciones, 
+                        respuestas.id_opciones
+                FROM encuestas
+                LEFT JOIN preguntas ON encuestas.id_encuestas = preguntas.id_encuestas
+                LEFT JOIN opciones ON preguntas.id_preguntas = opciones.id_preguntas
+                LEFT JOIN respuestas ON opciones.id_opciones = respuestas.id_opciones AND respuestas.id_usuario = %s
+                WHERE encuestas.id_usuario = %s
+                ORDER BY preguntas.id_preguntas ASC;
+            """, (id_usuario, id_usuario))
+            encuestas_detalladas = cur.fetchall()
+
+        return encuestas_detalladas
+
+
+    def prueba(self, id_usuario: int):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT
+                    encuestas.titulo,
+                    encuestas.descripcion,
+                    preguntas.id_preguntas,
+                    preguntas.preguntas,
+                    ARRAY_AGG(opciones.opciones) AS opciones,
+                    ARRAY_AGG(CASE WHEN respuestas.id_opciones IS NOT NULL THEN opciones.opciones ELSE NULL END) AS respuestas
+                FROM "user"
+                LEFT JOIN encuestas ON "user".id_usuario = encuestas.id_usuario
+                LEFT JOIN preguntas ON encuestas.id_encuestas = preguntas.id_encuestas
+                LEFT JOIN opciones ON preguntas.id_preguntas = opciones.id_preguntas
+                LEFT JOIN respuestas ON opciones.id_opciones = respuestas.id_opciones AND "user".id_usuario = respuestas.id_usuario
+                WHERE
+                    "user".id_usuario = %s
+                GROUP BY
+                    encuestas.titulo, encuestas.descripcion, preguntas.id_preguntas, preguntas.preguntas
+                ORDER BY
+                    preguntas.id_preguntas ASC;
+            """, (id_usuario,))
+            prueba = cur.fetchall()
+
+        # Procesar el resultado para formatearlo como deseas
+        formatted_result = []
+        for row in prueba:
+            formatted_row = list(row)
+            # Convertir el conjunto de opciones en un solo valor
+            formatted_row[4] = formatted_row[4] if formatted_row[4] is not None else []
+            # Convertir la respuesta en un solo valor
+            formatted_row[5] = formatted_row[5] if formatted_row[5] is not None else []
+            formatted_result.append(tuple(formatted_row))
+
+        return formatted_result
 
     def __def__(self):
         # esta funcion se ejecuta al finalizar el programa o al cerrar la conexion con la base de datos 

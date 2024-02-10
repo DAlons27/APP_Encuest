@@ -78,7 +78,8 @@ def root():
 def insert(user_data:UserSchema):
     data = user_data.model_dump()
     #data.pop("nombre del dato"), esto me permite no pasar un dato por mas que este en mi estructura (schema),  podria usarse para el id que se autogenere pero en este caso el usuario lo debe ingresar ademas es llave primaria
-    conn.write(data)  
+    conn.write(data)
+    return {"message": "Usuario registrado exitosamente"}
 
 # Ruta protegida para obtener todas las encuestas
 @app.get("/api/encuestas")
@@ -111,3 +112,29 @@ def create_encuesta(id_usuario: int, encuesta_data: EncuestaCreateSchema):
     conn.create_encuesta(id_usuario, encuesta_data.titulo, encuesta_data.descripcion, encuesta_data.fecha_creacion, encuesta_data.fecha_fin, encuesta_data.preguntas)
 
     return {"message": "Encuesta creada exitosamente"}
+
+# Usar este para MOSTRAR las encuestas realizadas por un usuario con detalles
+@app.get("/api/user/{id_usuario}/detalle_encuestas")
+def get_user_encuestas_realizadas_detalladas(id_usuario: int):
+    # Verificar si el usuario existe
+    user_data = conn.read_one(id_usuario)
+    if not user_data:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Obtener las encuestas realizadas por el usuario con detalles
+    encuestas_detalladas = conn.get_user_encuestas_detalladas(id_usuario)
+
+    return encuestas_detalladas
+
+# Ruta de prueba
+@app.get("/api/user/{id_usuario}/prueba")
+def prueba_encuesta(id_usuario: int):
+    # Verificar si el usuario existe
+    user_data = conn.read_one(id_usuario)
+    if not user_data:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Obtener las encuestas realizadas por el usuario con detalles
+    encuestas_detalladas = conn.prueba(id_usuario)
+
+    return encuestas_detalladas
