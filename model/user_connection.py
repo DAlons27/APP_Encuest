@@ -1,9 +1,8 @@
 # Conexion a la base datos
 from typing import List
 from schema.user_schema import PreguntaSchema
-
-
 import psycopg
+from datetime import datetime
 
 class UserConnection():
     # clase para la conexion con la base de datos
@@ -77,14 +76,19 @@ class UserConnection():
             encuestas = cur.fetchall()
         return encuestas
     
-    def create_encuesta(self, id_usuario: int, titulo: str, descripcion: str, fecha_creacion: str, fecha_fin: str, preguntas: List[PreguntaSchema]):
+    def create_encuesta(self, id_usuario: int, titulo: str, descripcion: str, fecha_fin: str, preguntas: List[PreguntaSchema]):
+        
+        print("Arguments:", id_usuario, titulo, descripcion, fecha_fin, preguntas)
+ 
+        fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         # Crear una nueva encuesta
         with self.conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO encuestas(id_usuario, titulo, descripcion, fecha_creacion, fecha_fin)
                 VALUES (%s, %s, %s, %s, %s) RETURNING id_encuestas
             """, (id_usuario, titulo, descripcion, fecha_creacion, fecha_fin))
-            id_encuesta = cur.fetchone()[0]
+            id_encuesta = cur.fetchone()[0]                  
 
             # Insertar preguntas y opciones asociadas
             for pregunta_data in preguntas:
@@ -102,7 +106,6 @@ class UserConnection():
 
             self.conn.commit() 
     
-
 #Voy a crear 2 funciones para obtener las encuestas detalladas asociadas a un usuario
 #La primera funcion, me dara como salida todas las encuestas asociadas a un usuario, con sus preguntas, opciones y respuesta del usuario
 #Podria usarse en el front para mostrar las encuestas asociadas a un usuario que han sido respondidas

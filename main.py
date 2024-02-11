@@ -1,11 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from model.user_connection import UserConnection
-from schema.user_schema import UserSchema, UserLogin
+from schema.user_schema import UserSchema, UserLogin, EncuestaCreateSchema
 from auth.auth import authenticate_user
 from fastapi.security import OAuth2PasswordBearer
-
 from fastapi.middleware.cors import CORSMiddleware
-from schema.user_schema import EncuestaCreateSchema
 
 app = FastAPI()
 conn = UserConnection()
@@ -109,7 +107,7 @@ def create_encuesta(id_usuario: int, encuesta_data: EncuestaCreateSchema):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     # Crear la encuesta, preguntas y opciones usando la conexión a la base de datos
-    conn.create_encuesta(id_usuario, encuesta_data.titulo, encuesta_data.descripcion, encuesta_data.fecha_creacion, encuesta_data.fecha_fin, encuesta_data.preguntas)
+    conn.create_encuesta(id_usuario, encuesta_data.titulo, encuesta_data.descripcion, encuesta_data.fecha_fin, encuesta_data.preguntas)
 
     return {"message": "Encuesta creada exitosamente"}
 

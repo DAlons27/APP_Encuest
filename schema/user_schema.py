@@ -22,6 +22,5 @@ class PreguntaSchema(BaseModel):
 class EncuestaCreateSchema(BaseModel):
     titulo: str
     descripcion: str
-    fecha_creacion: str
     fecha_fin: str
     preguntas: List[PreguntaSchema]
