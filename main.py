@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from model.user_connection import UserConnection
-from schema.user_schema import UserSchema, UserLogin, EncuestaCreateSchema
+from schema.user_schema import UserSchema, UserLogin, EncuestaCreateSchema, RespuestaSchema
 from auth.auth import authenticate_user
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
@@ -124,9 +124,10 @@ def get_user_encuestas_realizadas_detalladas(id_usuario: int):
 
     return encuestas_detalladas
 
-# Ruta de prueba
+# Igual que get_user_encuestas_detalladas, pero la respuesta sale en formato de lista
 @app.get("/api/user/{id_usuario}/prueba")
 def prueba_encuesta(id_usuario: int):
+    
     # Verificar si el usuario existe
     user_data = conn.read_one(id_usuario)
     if not user_data:
@@ -136,3 +137,13 @@ def prueba_encuesta(id_usuario: int):
     encuestas_detalladas = conn.prueba(id_usuario)
 
     return encuestas_detalladas
+
+# Ruta para respoder a una encuesta  
+@app.post("/api/user/{id_usuario}/encuestas/{id_encuesta}/responder")
+def responder_encuesta(id_usuario: int, id_encuesta: int, respuestas: RespuestaSchema):
+    for respuesta in respuestas.respuestas:
+        id_pregunta = respuesta["id_pregunta"]
+        id_opcion = respuesta["id_opcion"]
+        conn.responder_encuesta(id_usuario, id_encuesta, id_pregunta, id_opcion)
+
+    return {"message": "Respuestas registradas exitosamente"}

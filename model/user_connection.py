@@ -3,6 +3,7 @@ from typing import List
 from schema.user_schema import PreguntaSchema
 import psycopg
 from datetime import datetime
+from fastapi import HTTPException
 
 class UserConnection():
     # clase para la conexion con la base de datos
@@ -105,11 +106,19 @@ class UserConnection():
                     """, (id_pregunta, opcion_data.opcion_texto))
 
             self.conn.commit() 
-    
-#Voy a crear 2 funciones para obtener las encuestas detalladas asociadas a un usuario
-#La primera funcion, me dara como salida todas las encuestas asociadas a un usuario, con sus preguntas, opciones y respuesta del usuario
-#Podria usarse en el front para mostrar las encuestas asociadas a un usuario que han sido respondidas
 
+    def responder_encuesta(self, id_usuario: int, id_encuesta: int, id_pregunta: int, id_opcion: int):
+        with self.conn.cursor() as cur:
+
+        # Insertar la respuesta en la tabla respuestas
+            cur.execute("""
+                INSERT INTO respuestas(id_opciones, id_usuario)
+                VALUES (%s, %s)
+            """, (id_opcion, id_usuario))
+
+            self.conn.commit() 
+
+# Obtener las encuestas realizadas por el usuario con detalles de sus respuestas
     def get_user_encuestas_detalladas(self, id_usuario: int):
         with self.conn.cursor() as cur:
             cur.execute("""
@@ -130,7 +139,7 @@ class UserConnection():
 
         return encuestas_detalladas
 
-
+# Igual que get_user_encuestas_detalladas, pero la respuesta sale en formato de lista
     def prueba(self, id_usuario: int):
         with self.conn.cursor() as cur:
             cur.execute("""

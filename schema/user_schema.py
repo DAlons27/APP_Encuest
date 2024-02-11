@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 
 class UserSchema(BaseModel):
     id_usuario: int
@@ -8,7 +8,6 @@ class UserSchema(BaseModel):
     age: str
     email: str
     password: str
-
 class UserLogin(BaseModel):
     id_usuario: int
     password: str
@@ -24,3 +23,5 @@ class EncuestaCreateSchema(BaseModel):
     descripcion: str
     fecha_fin: str
     preguntas: List[PreguntaSchema]
+class RespuestaSchema(BaseModel):
+    respuestas: List[Dict[str, int]]
