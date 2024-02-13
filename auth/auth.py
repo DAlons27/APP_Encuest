@@ -1,9 +1,10 @@
 # auth.py
-from jose import jwt
+from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from model.user_connection import UserConnection
+from fastapi import APIRouter
 
 # Configuración del token
 ALGORITHM = "HS256"
@@ -37,3 +38,24 @@ def create_access_token(data: dict, expires_delta: timedelta) -> str:
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+# VERIFICADO
+# Función para decodificar un token
+def decode_token(token: str):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload
+    except JWTError:
+        raise credentials_exception
+
+# VERIFICADO
+router = APIRouter()
+
+@router.get("/validate-token")
+def validate_token(token: str = Depends(decode_token)):
+    return {"message": "Token Valido"}

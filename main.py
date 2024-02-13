@@ -1,11 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from model.user_connection import UserConnection
 from schema.user_schema import UserSchema, EncuestaCreateSchema, RespuestaSchema
-from auth.auth import login_for_access_token
+from auth.auth import login_for_access_token, router as auth_router
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+router = APIRouter() 
 conn = UserConnection()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 global_token = None
@@ -29,6 +30,9 @@ app.add_middleware(
 @app.post("/api/login", response_model=dict)
 async def login(email: str, password: str, token: str = Depends(login_for_access_token)):
     return {"token": token}
+
+# VERIFICADO
+app.include_router(auth_router, prefix="/api", tags=["token"])
 
 #VERIFICADO
 # Usare este para MOSTRAR un usuario en especifico segun su email

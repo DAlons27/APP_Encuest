@@ -7,6 +7,7 @@ class UserSchema(BaseModel):
     age: str
     email: str
     password: str
+
 class UserLogin(BaseModel):
     email: str
     password: str
@@ -19,13 +20,16 @@ class Token(BaseModel):
 # Servira para la creacion de encuestas
 class OpcionSchema(BaseModel):
     opcion_texto: str
+
 class PreguntaSchema(BaseModel):
     pregunta: str
     opciones: List[OpcionSchema]
+
 class EncuestaCreateSchema(BaseModel):
     titulo: str
     descripcion: str
     fecha_fin: str
     preguntas: List[PreguntaSchema]
+    
 class RespuestaSchema(BaseModel):
     respuestas: List[Dict[str, int]]
