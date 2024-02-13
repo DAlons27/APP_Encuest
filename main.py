@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#VERIFICADO
+# VERIFICADO
 # Usare este para el login de un usuario    
 @app.post("/api/login", response_model=dict)
 async def login(email: str, password: str, token: str = Depends(login_for_access_token)):
@@ -34,7 +34,7 @@ async def login(email: str, password: str, token: str = Depends(login_for_access
 # VERIFICADO
 app.include_router(auth_router, prefix="/api", tags=["token"])
 
-#VERIFICADO
+# VERIFICADO
 # Usare este para MOSTRAR un usuario en especifico segun su email
 @app.get("/api/user/{email}")
 def get_one(email:str):
@@ -49,7 +49,7 @@ def get_one(email:str):
 
     return dictionary
 
-#VERIFICADO
+# VERIFICADO
 # Usare esto para MOSTRAR todos los usuarios registrados.
 @app.get("/")
 def root():
@@ -66,7 +66,7 @@ def root():
         items.append(dictionary)
     return items
 
-#VERIFICADO
+# VERIFICADO
 # Usare este para REGISTRAR un usuario
 @app.post("/api/insert")
 def insert(user_data:UserSchema):
@@ -74,7 +74,7 @@ def insert(user_data:UserSchema):
     conn.write(data)
     return {"message": "Usuario registrado exitosamente"}
 
-#VERIFICADO
+# VERIFICADO
 # Ruta protegida para obtener todas las encuestas
 @app.get("/api/encuestas")
 def get_all_encuestas():
