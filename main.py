@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from model.user_connection import UserConnection
 from schema.user_schema import UserSchema, EncuestaCreateSchema, RespuestaSchema
-from auth.auth import login_for_access_token, router as auth_router
+from auth.auth import login_for_access_token, decode_token, router as auth_router
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,19 +35,18 @@ async def login(email: str, password: str, token: str = Depends(login_for_access
 app.include_router(auth_router, prefix="/api", tags=["token"])
 
 # VERIFICADO
-# Usare este para MOSTRAR un usuario en especifico segun su email
-@app.get("/api/user/{email}")
-def get_one(email:str):
-    dictionary = {}
-    data = conn.read_one(email)
-    dictionary["id_usuario"] = data[0]
-    dictionary["name"] = data[1]
-    dictionary["lastname"] = data[2]
-    dictionary["age"] = data[3]
-    dictionary["email"] = data[4]
-    dictionary["password"] = data[5]
-
-    return dictionary
+# Ruta protegida para obtener el perfil del usuario con el token
+@app.get("/api/user/profile")
+def get_user_profile(token: str = Depends(oauth2_scheme)):
+    decoded_token = decode_token(token)
+    user_email = decoded_token.get("sub")
+    
+    # Aquí puedes utilizar el email para obtener la información del usuario desde la base de datos
+    # Puedes usar la conexión a la base de datos o el método que prefieras
+    user_data = conn.get_user_by_email(user_email)
+    
+    # Luego, puedes devolver la información del usuario
+    return {"email": user_email, "user_data": user_data}
 
 # VERIFICADO
 # Usare esto para MOSTRAR todos los usuarios registrados.

@@ -9,7 +9,7 @@ from fastapi import APIRouter
 # Configuración del token
 ALGORITHM = "HS256"
 SECRET_KEY = "your-secret-key"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -25,7 +25,7 @@ def login_for_access_token(email: str, password: str, user_conn: UserConnection 
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user['email'])},
+        data={  "sub": str(user['email'])},
         expires_delta=access_token_expires
     )
 

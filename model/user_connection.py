@@ -65,7 +65,7 @@ class UserConnection():
             return data.fetchone()
 
     # VERIFICADO
-    #REGISTRO DEL USUARIO       
+    # REGISTRO DEL USUARIO       
     def write(self, data):
         
         with self.conn.cursor() as cur:
@@ -73,6 +73,15 @@ class UserConnection():
                 INSERT INTO "user"(name, lastname, age, email, password) VALUES(%(name)s, %(lastname)s, %(age)s, %(email)s, %(password)s)
                         """, data)
             self.conn.commit()
+
+    # VERIFICADO
+    # Nuevo método para obtener un usuario por email
+    def get_user_by_email(self, email: str):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT * FROM "user" WHERE email = %s
+            """, (email,))
+            return cur.fetchone()
 
     def get_user_encuestas(self, id_usuario: int):
         #Obtener las encuestas asociadas a un usuario, solo el campo titulo
@@ -229,6 +238,7 @@ class UserConnection():
 
         return formatted_result      
     
+
     def __def__(self):
         # esta funcion se ejecuta al finalizar el programa o al cerrar la conexion con la base de datos 
 
