@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from model.user_connection import UserConnection
-from schema.user_schema import UserSchema, UserLogin, EncuestaCreateSchema, RespuestaSchema
-from auth.auth import authenticate_user
+from schema.user_schema import UserSchema, EncuestaCreateSchema, RespuestaSchema
+from auth.auth import login_for_access_token
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -24,28 +24,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Usare este para LOGEAR un usuario    
+#VERIFICADO
+# Usare este para el login de un usuario    
 @app.post("/api/login", response_model=dict)
-def login(user_login: UserLogin):
-    global global_token
+async def login(email: str, password: str, token: str = Depends(login_for_access_token)):
+    return {"token": token}
 
-    try:
-        user = authenticate_user(conn, user_login.id_usuario, user_login.password)
-
-        if user:
-        # Almacena el token en la variable global
-            global_token = user.get("token")
-            return {"message": "Usuario autenticado exitosamente", "token": global_token}
-
-        return user  # Esto incluirá el token si la autenticación fue exitosa
-    except HTTPException as e:
-        return {"error": e.detail}
-
-# Usare este para MOSTRAR un usuario en especifico
-@app.get("/api/user/{id_usuario}")
-def get_one(id_usuario:str):
+#VERIFICADO
+# Usare este para MOSTRAR un usuario en especifico segun su email
+@app.get("/api/user/{email}")
+def get_one(email:str):
     dictionary = {}
-    data = conn.read_one(id_usuario)
+    data = conn.read_one(email)
     dictionary["id_usuario"] = data[0]
     dictionary["name"] = data[1]
     dictionary["lastname"] = data[2]
@@ -55,6 +45,7 @@ def get_one(id_usuario:str):
 
     return dictionary
 
+#VERIFICADO
 # Usare esto para MOSTRAR todos los usuarios registrados.
 @app.get("/")
 def root():
@@ -71,14 +62,15 @@ def root():
         items.append(dictionary)
     return items
 
+#VERIFICADO
 # Usare este para REGISTRAR un usuario
 @app.post("/api/insert")
 def insert(user_data:UserSchema):
     data = user_data.model_dump()
-    #data.pop("nombre del dato"), esto me permite no pasar un dato por mas que este en mi estructura (schema),  podria usarse para el id que se autogenere pero en este caso el usuario lo debe ingresar ademas es llave primaria
     conn.write(data)
     return {"message": "Usuario registrado exitosamente"}
 
+#VERIFICADO
 # Ruta protegida para obtener todas las encuestas
 @app.get("/api/encuestas")
 def get_all_encuestas():
@@ -86,7 +78,7 @@ def get_all_encuestas():
     return encuestas
 
 # Usare este para listar todos los formularios asociados a un usuario
-@app.get("/api/user/{id_usuario}/encuestas")
+@app.get("/api/user/{email}/encuestas")
 def get_user_encuestas(id_usuario: int):
     # Verificar si el usuario existe
     user_data = conn.read_one(id_usuario)
@@ -147,3 +139,12 @@ def responder_encuesta(id_usuario: int, id_encuesta: int, respuestas: RespuestaS
         conn.responder_encuesta(id_usuario, id_encuesta, id_pregunta, id_opcion)
 
     return {"message": "Respuestas registradas exitosamente"}
+
+# Ruta para obtner todos las encuestas realizadas a detalle
+# Opcional
+@app.get("/api/encuestas/detalle")
+def get_encuestas_realizadas_detalladas():
+    # Obtener todas las encuestas con detalles
+    encuestas_detalladas = conn.obtener_encuestas_detalladas()
+
+    return encuestas_detalladas

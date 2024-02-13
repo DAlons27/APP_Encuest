@@ -2,15 +2,19 @@ from pydantic import BaseModel
 from typing import List, Dict
 
 class UserSchema(BaseModel):
-    id_usuario: int
     name: str
     lastname: str
     age: str
     email: str
     password: str
 class UserLogin(BaseModel):
-    id_usuario: int
+    email: str
     password: str
+
+class Token(BaseModel):
+    #cambios dia 12
+    access_token: str
+    token_type: str
 
 # Servira para la creacion de encuestas
 class OpcionSchema(BaseModel):

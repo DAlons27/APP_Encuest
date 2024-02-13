@@ -1,27 +1,39 @@
-from fastapi import HTTPException
-from jose import jwt, JWTError
+# auth.py
+from jose import jwt
+from datetime import datetime, timedelta
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from model.user_connection import UserConnection
 
-SECRET_KEY = "mysecretkey"
+# Configuración del token
 ALGORITHM = "HS256"
+SECRET_KEY = "your-secret-key"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-def create_jwt_token(data: dict):
-    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def verify_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+#VERIFICADO
+def login_for_access_token(email: str, password: str, user_conn: UserConnection = Depends()):
+    user = user_conn.authenticate_user(email, password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-def authenticate_user(db: UserConnection, username: str, password: str):
-    user = db.authenticate_user(username, password)
-    print("User from authenticate_user:", user)
-    
-    if user and user[5] == password:  # Ajustar el índice según la posición de la contraseña en tu tupla
-        token_data = {"sub": user[0]}
-        token = create_jwt_token(token_data)
-        return {"token": token}
-    else:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(user['email'])},
+        expires_delta=access_token_expires
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+#VERIFICADO
+def create_access_token(data: dict, expires_delta: timedelta) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt

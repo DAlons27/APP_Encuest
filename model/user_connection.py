@@ -3,7 +3,6 @@ from typing import List
 from schema.user_schema import PreguntaSchema
 import psycopg
 from datetime import datetime
-from fastapi import HTTPException
 
 class UserConnection():
     # clase para la conexion con la base de datos
@@ -21,6 +20,31 @@ class UserConnection():
             self.conn.close()
             # cierra la base de datos en caso de error
 
+    # VERIFICADO
+    def authenticate_user(self, email: str, password: str):
+        with self.conn:
+            cur = self.conn.cursor()
+            cur.execute("""
+                SELECT * FROM "user" WHERE email = %s AND password = %s
+            """, (email, password))
+            # Fetch the result
+            result = cur.fetchone()
+
+            # Convertir la tupla de resultado a un diccionario manualmente
+            if result:
+                user_dict = {
+                    "id_usuario": result[0],
+                    "name": result[1],
+                    "lastname": result[2],
+                    "age": result[3],
+                    "email": result[4],
+                    "password": result[5]
+                }
+                return user_dict
+            else:
+                return None
+
+    # VERIFICADO
     def read_all(self):
         #Lo usare para visualizar la informacion de todos los usuarios
         with self.conn.cursor() as cur:
@@ -28,34 +52,27 @@ class UserConnection():
                 SELECT * FROM "user"
                                """)
             return data.fetchall()
-        
-    def read_one(self, id_usuario):
-        #Lo usare para visualizar la informacion de un usuario en especifico
+
+    # VERIFICADO 
+    # Lo usare para visualizar la informacion de un usuario en especifico segun un email
+    def read_one(self, email):
 
         with self.conn.cursor() as cur:
             data = cur.execute("""
-                SELECT * FROM "user" WHERE id_usuario = %s
-                               """, (id_usuario,))
+                SELECT * FROM "user" WHERE email = %s
+                               """, (email,))
             #modificacando a return data.fetchall() obtengo todos los registros asociados al id... Tambien cambiar la sentencia
             return data.fetchone()
-       
-    def write(self, data):
-        #REGISTRO DEL USUARIO
-        with self.conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO "user"(id_usuario, name, lastname, age, email, password) VALUES(%(id_usuario)s, %(name)s, %(lastname)s, %(age)s, %(email)s, %(password)s)
-                        """, data)
-            # Sentencia sql, inserto nuevos datos en la tablas indicadas, data es un diccionario
-            self.conn.commit()
 
-    def authenticate_user(self, id_usuario: str, password: str):
-        #Autenticacion del usuario para el login con JWT
-        # LOGIN DEL USUARIO
+    # VERIFICADO
+    #REGISTRO DEL USUARIO       
+    def write(self, data):
+        
         with self.conn.cursor() as cur:
             cur.execute("""
-                SELECT * FROM "user" WHERE id_usuario = %s AND password = %s
-            """, (id_usuario, password))
-            return cur.fetchone()
+                INSERT INTO "user"(name, lastname, age, email, password) VALUES(%(name)s, %(lastname)s, %(age)s, %(email)s, %(password)s)
+                        """, data)
+            self.conn.commit()
 
     def get_user_encuestas(self, id_usuario: int):
         #Obtener las encuestas asociadas a un usuario, solo el campo titulo
@@ -156,15 +173,17 @@ class UserConnection():
                 LEFT JOIN opciones ON preguntas.id_preguntas = opciones.id_preguntas
                 LEFT JOIN respuestas ON opciones.id_opciones = respuestas.id_opciones AND "user".id_usuario = respuestas.id_usuario
                 WHERE
-                    "user".id_usuario = %s
+                    ("user".id_usuario = %s AND respuestas.id_opciones IS NULL) OR
+                    ("user".id_usuario = %s AND respuestas.id_opciones IS NOT NULL) OR
+                    ("user".id_usuario != %s AND respuestas.id_opciones IS NOT NULL)
                 GROUP BY
                     encuestas.titulo, encuestas.descripcion, preguntas.id_preguntas, preguntas.preguntas
                 ORDER BY
                     preguntas.id_preguntas ASC;
-            """, (id_usuario,))
+            """, (id_usuario, id_usuario, id_usuario))
             prueba = cur.fetchall()
 
-        # Procesar el resultado para formatearlo como deseas
+        # Procesar el resultado para formatearlo
         formatted_result = []
         for row in prueba:
             formatted_row = list(row)
@@ -173,9 +192,43 @@ class UserConnection():
             # Convertir la respuesta en un solo valor
             formatted_row[5] = formatted_row[5] if formatted_row[5] is not None else []
             formatted_result.append(tuple(formatted_row))
-
+        #print(formatted_result)   
+        #formatted_result.sort(key=lambda x: x[2] if x[2] is not None else float('inf')) 
         return formatted_result
 
+# Me permite obtner todos las encuestas realizadas a detalle
+# Opcional 
+    def obtener_encuestas_detalladas(self):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT
+                    encuestas.titulo,
+                    encuestas.descripcion,
+                    preguntas.id_preguntas,
+                    preguntas.preguntas,
+                    ARRAY_AGG(opciones.opciones) AS opciones,
+                    ARRAY_AGG(CASE WHEN respuestas.id_opciones IS NOT NULL THEN opciones.opciones ELSE NULL END) AS respuestas
+                FROM encuestas
+                LEFT JOIN preguntas ON encuestas.id_encuestas = preguntas.id_encuestas
+                LEFT JOIN opciones ON preguntas.id_preguntas = opciones.id_preguntas
+                LEFT JOIN respuestas ON opciones.id_opciones = respuestas.id_opciones
+                GROUP BY encuestas.titulo, encuestas.descripcion, preguntas.id_preguntas, preguntas.preguntas
+                ORDER BY preguntas.id_preguntas ASC;
+            """)
+            encuestas = cur.fetchall()
+
+        # Procesar el resultado para formatearlo
+        formatted_result = []
+        for row in encuestas:
+            formatted_row = list(row)
+            # Convertir el conjunto de opciones en un solo valor
+            formatted_row[4] = formatted_row[4] if formatted_row[4] is not None else []
+            # Convertir la respuesta en un solo valor
+            formatted_row[5] = formatted_row[5] if formatted_row[5] is not None else []
+            formatted_result.append(tuple(formatted_row))
+
+        return formatted_result      
+    
     def __def__(self):
         # esta funcion se ejecuta al finalizar el programa o al cerrar la conexion con la base de datos 
 
