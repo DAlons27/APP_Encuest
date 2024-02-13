@@ -20,7 +20,8 @@ class UserConnection():
             self.conn.close()
             # cierra la base de datos en caso de error
 
-    # VERIFICADO
+    # VERIFICADO x2
+    # Autenticar usuario
     def authenticate_user(self, email: str, password: str):
         with self.conn:
             cur = self.conn.cursor()
@@ -44,16 +45,16 @@ class UserConnection():
             else:
                 return None
 
-    # VERIFICADO
+    # VERIFICADO x2
+    # Lo usare para visualizar la informacion de todos los usuarios
     def read_all(self):
-        #Lo usare para visualizar la informacion de todos los usuarios
         with self.conn.cursor() as cur:
             data = cur.execute("""
                 SELECT * FROM "user"
                                """)
             return data.fetchall()
 
-    # VERIFICADO 
+    # VERIFICADO x2
     # Lo usare para visualizar la informacion de un usuario en especifico segun un email
     def read_one(self, email):
 
@@ -64,7 +65,7 @@ class UserConnection():
             #modificacando a return data.fetchall() obtengo todos los registros asociados al id... Tambien cambiar la sentencia
             return data.fetchone()
 
-    # VERIFICADO
+    # VERIFICADO x2
     # REGISTRO DEL USUARIO       
     def write(self, data):
         
@@ -74,7 +75,7 @@ class UserConnection():
                         """, data)
             self.conn.commit()
 
-    # VERIFICADO
+    # VERIFICADO x2
     # Nuevo método para obtener un usuario por email
     def get_user_by_email(self, email: str):
         with self.conn.cursor() as cur:
@@ -83,13 +84,16 @@ class UserConnection():
             """, (email,))
             return cur.fetchone()
 
-    def get_user_encuestas(self, id_usuario: int):
-        #Obtener las encuestas asociadas a un usuario, solo el campo titulo
+    def get_user_encuestas(self, email: str):
+        # Obtener las encuestas asociadas a un usuario, solo el campo titulo y descripcion
         # MIS ENCUESTAS
         with self.conn.cursor() as cur:
             cur.execute("""
-                SELECT titulo, descripcion FROM encuestas WHERE id_usuario = %s
-            """, (id_usuario,))
+                SELECT e.titulo, e.descripcion
+                FROM encuestas e
+                JOIN "user" u ON e.id_usuario = u.id_usuario
+                WHERE u.email = %s
+            """, (email,))
             encuestas = cur.fetchall()
         return encuestas
     
@@ -144,7 +148,7 @@ class UserConnection():
 
             self.conn.commit() 
 
-# Obtener las encuestas realizadas por el usuario con detalles de sus respuestas
+    # Obtener las encuestas realizadas por el usuario con detalles de sus respuestas
     def get_user_encuestas_detalladas(self, id_usuario: int):
         with self.conn.cursor() as cur:
             cur.execute("""
@@ -165,7 +169,7 @@ class UserConnection():
 
         return encuestas_detalladas
 
-# Igual que get_user_encuestas_detalladas, pero la respuesta sale en formato de lista
+    # Igual que get_user_encuestas_detalladas, pero la respuesta sale en formato de lista
     def prueba(self, id_usuario: int):
         with self.conn.cursor() as cur:
             cur.execute("""
@@ -205,8 +209,8 @@ class UserConnection():
         #formatted_result.sort(key=lambda x: x[2] if x[2] is not None else float('inf')) 
         return formatted_result
 
-# Me permite obtner todos las encuestas realizadas a detalle
-# Opcional 
+    # Me permite obtner todos las encuestas realizadas a detalle
+    # Opcional 
     def obtener_encuestas_detalladas(self):
         with self.conn.cursor() as cur:
             cur.execute("""

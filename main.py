@@ -25,16 +25,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# VERIFICADO
+# VERIFICADO x2
 # Usare este para el login de un usuario    
 @app.post("/api/login", response_model=dict)
 async def login(email: str, password: str, token: str = Depends(login_for_access_token)):
     return {"token": token}
 
-# VERIFICADO
+# VERIFICADO x2
 app.include_router(auth_router, prefix="/api", tags=["token"])
 
-# VERIFICADO
+# VERIFICADO x2
 # Ruta protegida para obtener el perfil del usuario con el token
 @app.get("/api/user/profile")
 def get_user_profile(token: str = Depends(oauth2_scheme)):
@@ -48,7 +48,18 @@ def get_user_profile(token: str = Depends(oauth2_scheme)):
     # Luego, puedes devolver la información del usuario
     return {"email": user_email, "user_data": user_data}
 
-# VERIFICADO
+# VERIFICADO X2
+# Usare este para listar todos los formularios asociados a un usuario
+@app.get("/api/user/encuestas", response_model=list)
+def get_user_profile(token: str = Depends(oauth2_scheme)):
+    decoded_token = decode_token(token)
+    user_email = decoded_token.get("sub")
+    # Obtener encuestas asociadas al usuario
+    encuestas = conn.get_user_encuestas(user_email) 
+    #encuestas = conn.get_user_encuestas(user["email"])  
+    return encuestas
+
+# VERIFICADO x2
 # Usare esto para MOSTRAR todos los usuarios registrados.
 @app.get("/")
 def root():
@@ -65,7 +76,7 @@ def root():
         items.append(dictionary)
     return items
 
-# VERIFICADO
+# VERIFICADO x2
 # Usare este para REGISTRAR un usuario
 @app.post("/api/insert")
 def insert(user_data:UserSchema):
@@ -73,26 +84,15 @@ def insert(user_data:UserSchema):
     conn.write(data)
     return {"message": "Usuario registrado exitosamente"}
 
-# VERIFICADO
+# VERIFICADO x2
 # Ruta protegida para obtener todas las encuestas
+# Es necesario el token aqui?
 @app.get("/api/encuestas")
 def get_all_encuestas():
     encuestas = conn.get_all_encuestas()
     return encuestas
 
-# Usare este para listar todos los formularios asociados a un usuario
-@app.get("/api/user/{email}/encuestas")
-def get_user_encuestas(id_usuario: int):
-    # Verificar si el usuario existe
-    user_data = conn.read_one(id_usuario)
-    if not user_data:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    # Obtener encuestas asociadas al id_usuario
-    encuestas = conn.get_user_encuestas(id_usuario)
-
-    return encuestas
-
+# FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Usar este para REGISTRAR una encuesta con preguntas y opciones
 @app.post("/api/user/{id_usuario}/encuestas")
 def create_encuesta(id_usuario: int, encuesta_data: EncuestaCreateSchema):
@@ -106,6 +106,7 @@ def create_encuesta(id_usuario: int, encuesta_data: EncuestaCreateSchema):
 
     return {"message": "Encuesta creada exitosamente"}
 
+# FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Usar este para MOSTRAR las encuestas realizadas por un usuario con detalles
 @app.get("/api/user/{id_usuario}/detalle_encuestas")
 def get_user_encuestas_realizadas_detalladas(id_usuario: int):
@@ -119,6 +120,7 @@ def get_user_encuestas_realizadas_detalladas(id_usuario: int):
 
     return encuestas_detalladas
 
+# FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Igual que get_user_encuestas_detalladas, pero la respuesta sale en formato de lista
 @app.get("/api/user/{id_usuario}/prueba")
 def prueba_encuesta(id_usuario: int):
@@ -133,6 +135,7 @@ def prueba_encuesta(id_usuario: int):
 
     return encuestas_detalladas
 
+# FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Ruta para respoder a una encuesta  
 @app.post("/api/user/{id_usuario}/encuestas/{id_encuesta}/responder")
 def responder_encuesta(id_usuario: int, id_encuesta: int, respuestas: RespuestaSchema):
@@ -143,6 +146,7 @@ def responder_encuesta(id_usuario: int, id_encuesta: int, respuestas: RespuestaS
 
     return {"message": "Respuestas registradas exitosamente"}
 
+# FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Ruta para obtner todos las encuestas realizadas a detalle
 # Opcional
 @app.get("/api/encuestas/detalle")
