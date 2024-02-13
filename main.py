@@ -59,6 +59,18 @@ def get_user_profile(token: str = Depends(oauth2_scheme)):
     #encuestas = conn.get_user_encuestas(user["email"])  
     return encuestas
 
+# FALTA MODIFICAR LA RUTA Y VERIFICARLA
+# Usar este para REGISTRAR una encuesta con preguntas y opciones
+@app.post("/api/user/crear/encuestas")
+def create_encuesta(encuesta_data: EncuestaCreateSchema, token: str = Depends(oauth2_scheme)):
+    decoded_token = decode_token(token)
+    user_email = decoded_token.get("sub")
+
+    # Crear la encuesta, preguntas y opciones usando la conexión a la base de datos
+    conn.create_encuesta(user_email, encuesta_data.titulo, encuesta_data.descripcion, encuesta_data.fecha_fin, encuesta_data.preguntas)
+
+    return {"message": "Encuesta creada exitosamente"}
+
 # VERIFICADO x2
 # Usare esto para MOSTRAR todos los usuarios registrados.
 @app.get("/")
@@ -91,20 +103,6 @@ def insert(user_data:UserSchema):
 def get_all_encuestas():
     encuestas = conn.get_all_encuestas()
     return encuestas
-
-# FALTA MODIFICAR LA RUTA Y VERIFICARLA
-# Usar este para REGISTRAR una encuesta con preguntas y opciones
-@app.post("/api/user/{id_usuario}/encuestas")
-def create_encuesta(id_usuario: int, encuesta_data: EncuestaCreateSchema):
-    # Verificar si el usuario existe
-    user_data = conn.read_one(id_usuario)
-    if not user_data:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    # Crear la encuesta, preguntas y opciones usando la conexión a la base de datos
-    conn.create_encuesta(id_usuario, encuesta_data.titulo, encuesta_data.descripcion, encuesta_data.fecha_fin, encuesta_data.preguntas)
-
-    return {"message": "Encuesta creada exitosamente"}
 
 # FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Usar este para MOSTRAR las encuestas realizadas por un usuario con detalles

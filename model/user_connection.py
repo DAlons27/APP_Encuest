@@ -76,7 +76,7 @@ class UserConnection():
             self.conn.commit()
 
     # VERIFICADO x2
-    # Nuevo método para obtener un usuario por email
+    # Obtener un usuario por email
     def get_user_by_email(self, email: str):
         with self.conn.cursor() as cur:
             cur.execute("""
@@ -84,9 +84,9 @@ class UserConnection():
             """, (email,))
             return cur.fetchone()
 
+    # VERIFICADO x2
+    # Obtener las encuestas asociadas a un usuario solo el campo titulo y descripcion
     def get_user_encuestas(self, email: str):
-        # Obtener las encuestas asociadas a un usuario, solo el campo titulo y descripcion
-        # MIS ENCUESTAS
         with self.conn.cursor() as cur:
             cur.execute("""
                 SELECT e.titulo, e.descripcion
@@ -97,6 +97,22 @@ class UserConnection():
             encuestas = cur.fetchall()
         return encuestas
     
+    # VERIFICADO x2
+    # Función para obtener el id_usuario por correo electrónico
+    def get_user_id_by_email(self, email: str):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT id_usuario FROM "user" WHERE email = %s
+            """, (email,))
+            result = cur.fetchone()
+
+        if result:
+            return result[0]
+        else:
+            return None
+
+    # VERIFICADO x2
+    # Obtener todas las encuestas: titulo y descripcion
     def get_all_encuestas(self):
         #Obtener todas las encuestas, solo el campo titulo y descripcion
         # TODAS LAS ENCUESTAS
@@ -107,18 +123,21 @@ class UserConnection():
             encuestas = cur.fetchall()
         return encuestas
     
-    def create_encuesta(self, id_usuario: int, titulo: str, descripcion: str, fecha_fin: str, preguntas: List[PreguntaSchema]):
-        
-        print("Arguments:", id_usuario, titulo, descripcion, fecha_fin, preguntas)
- 
+    # VERIFICADO x2
+    # Crear una nueva encuesta con preguntas y opciones
+    def create_encuesta(self, email: str, titulo: str, descripcion: str, fecha_fin: str, preguntas: List[PreguntaSchema]):
+                      
         fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Obtener el id_usuario asociado al correo electrónico
+        id_usuario = self.get_user_id_by_email(email)
 
         # Crear una nueva encuesta
         with self.conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO encuestas(id_usuario, titulo, descripcion, fecha_creacion, fecha_fin)
                 VALUES (%s, %s, %s, %s, %s) RETURNING id_encuestas
-            """, (id_usuario, titulo, descripcion, fecha_creacion, fecha_fin))
+            """, (id_usuario ,titulo, descripcion, fecha_creacion, fecha_fin))
             id_encuesta = cur.fetchone()[0]                  
 
             # Insertar preguntas y opciones asociadas
