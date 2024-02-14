@@ -59,7 +59,21 @@ def get_user_profile(token: str = Depends(oauth2_scheme)):
     #encuestas = conn.get_user_encuestas(user["email"])  
     return encuestas
 
-# FALTA MODIFICAR LA RUTA Y VERIFICARLA
+# VERIFICADO X2
+# Responder encuesta
+@app.post("/api/user/encuestas/responder")
+def responder_encuesta(respuestas: RespuestaSchema, token: str = Depends(oauth2_scheme)):
+    decoded_token = decode_token(token)
+    id_usuario = decoded_token.get("sub")
+
+    for respuesta in respuestas.respuestas:
+        id_pregunta = respuesta["id_pregunta"]
+        id_opcion = respuesta["id_opcion"]
+        conn.reply_encuesta(id_usuario, id_pregunta, id_opcion)
+
+    return {"message": "Respuestas registradas exitosamente"}
+
+# VERIFICADO x2
 # Usar este para REGISTRAR una encuesta con preguntas y opciones
 @app.post("/api/user/crear/encuestas")
 def create_encuesta(encuesta_data: EncuestaCreateSchema, token: str = Depends(oauth2_scheme)):
@@ -98,11 +112,15 @@ def insert(user_data:UserSchema):
 
 # VERIFICADO x2
 # Ruta protegida para obtener todas las encuestas
-# Es necesario el token aqui?
 @app.get("/api/encuestas")
 def get_all_encuestas():
     encuestas = conn.get_all_encuestas()
     return encuestas
+
+
+
+
+
 
 # FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Usar este para MOSTRAR las encuestas realizadas por un usuario con detalles
@@ -132,17 +150,6 @@ def prueba_encuesta(id_usuario: int):
     encuestas_detalladas = conn.prueba(id_usuario)
 
     return encuestas_detalladas
-
-# FALTA MODIFICAR LA RUTA Y VERIFICARLA
-# Ruta para respoder a una encuesta  
-@app.post("/api/user/{id_usuario}/encuestas/{id_encuesta}/responder")
-def responder_encuesta(id_usuario: int, id_encuesta: int, respuestas: RespuestaSchema):
-    for respuesta in respuestas.respuestas:
-        id_pregunta = respuesta["id_pregunta"]
-        id_opcion = respuesta["id_opcion"]
-        conn.responder_encuesta(id_usuario, id_encuesta, id_pregunta, id_opcion)
-
-    return {"message": "Respuestas registradas exitosamente"}
 
 # FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Ruta para obtner todos las encuestas realizadas a detalle

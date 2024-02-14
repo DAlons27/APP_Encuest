@@ -156,7 +156,12 @@ class UserConnection():
 
             self.conn.commit() 
 
-    def responder_encuesta(self, id_usuario: int, id_encuesta: int, id_pregunta: int, id_opcion: int):
+    # VERIFICADO X2
+    # Responder a una encuesta
+    def reply_encuesta(self, email:str, id_pregunta: int, id_opcion: int):
+
+        id_usuario = self.get_user_id_by_email(email)
+
         with self.conn.cursor() as cur:
 
         # Insertar la respuesta en la tabla respuestas
@@ -166,6 +171,10 @@ class UserConnection():
             """, (id_opcion, id_usuario))
 
             self.conn.commit() 
+
+
+
+
 
     # Obtener las encuestas realizadas por el usuario con detalles de sus respuestas
     def get_user_encuestas_detalladas(self, id_usuario: int):

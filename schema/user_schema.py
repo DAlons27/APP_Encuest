@@ -13,11 +13,9 @@ class UserLogin(BaseModel):
     password: str
 
 class Token(BaseModel):
-    #cambios dia 12
     access_token: str
     token_type: str
 
-# Servira para la creacion de encuestas
 class OpcionSchema(BaseModel):
     opcion_texto: str
 
