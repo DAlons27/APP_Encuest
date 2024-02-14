@@ -198,7 +198,10 @@ class UserConnection():
         return encuestas_detalladas
 
     # Igual que get_user_encuestas_detalladas, pero la respuesta sale en formato de lista
-    def prueba(self, id_usuario: int):
+    def get_detalle_encuesta(self, id_usuario: int):
+
+        id_usuario = self.get_user_id_by_email(id_usuario)
+
         with self.conn.cursor() as cur:
             cur.execute("""
                 SELECT
@@ -238,7 +241,7 @@ class UserConnection():
         return formatted_result
 
     # Me permite obtner todos las encuestas realizadas a detalle
-    # Opcional 
+    # OPCIONAL 
     def obtener_encuestas_detalladas(self):
         with self.conn.cursor() as cur:
             cur.execute("""

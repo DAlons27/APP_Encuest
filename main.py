@@ -75,7 +75,7 @@ def responder_encuesta(respuestas: RespuestaSchema, token: str = Depends(oauth2_
 
 # VERIFICADO x2
 # Usar este para REGISTRAR una encuesta con preguntas y opciones
-@app.post("/api/user/crear/encuestas")
+@app.post("/api/user/encuestas/crear")
 def create_encuesta(encuesta_data: EncuestaCreateSchema, token: str = Depends(oauth2_scheme)):
     decoded_token = decode_token(token)
     user_email = decoded_token.get("sub")
@@ -84,6 +84,27 @@ def create_encuesta(encuesta_data: EncuestaCreateSchema, token: str = Depends(oa
     conn.create_encuesta(user_email, encuesta_data.titulo, encuesta_data.descripcion, encuesta_data.fecha_fin, encuesta_data.preguntas)
 
     return {"message": "Encuesta creada exitosamente"}
+
+
+
+
+
+# FALTA MODIFICAR LA RUTA Y VERIFICARLA
+# Igual que get_user_encuestas_detalladas, pero la respuesta sale en formato de lista
+@app.get("/api/user/encuesta/detalladas")
+def get_encuesta_detalle(token: str = Depends(oauth2_scheme)):
+
+    decoded_token = decode_token(token)
+    user_id = decoded_token.get("sub")
+
+
+    # Obtener las encuestas realizadas por el usuario con detalles
+    encuestas_detalladas = conn.get_detalle_encuesta(user_id)
+
+    return encuestas_detalladas
+
+
+
 
 # VERIFICADO x2
 # Usare esto para MOSTRAR todos los usuarios registrados.
@@ -137,23 +158,8 @@ def get_user_encuestas_realizadas_detalladas(id_usuario: int):
     return encuestas_detalladas
 
 # FALTA MODIFICAR LA RUTA Y VERIFICARLA
-# Igual que get_user_encuestas_detalladas, pero la respuesta sale en formato de lista
-@app.get("/api/user/{id_usuario}/prueba")
-def prueba_encuesta(id_usuario: int):
-    
-    # Verificar si el usuario existe
-    user_data = conn.read_one(id_usuario)
-    if not user_data:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    # Obtener las encuestas realizadas por el usuario con detalles
-    encuestas_detalladas = conn.prueba(id_usuario)
-
-    return encuestas_detalladas
-
-# FALTA MODIFICAR LA RUTA Y VERIFICARLA
 # Ruta para obtner todos las encuestas realizadas a detalle
-# Opcional
+# OPCIONAL
 @app.get("/api/encuestas/detalle")
 def get_encuestas_realizadas_detalladas():
     # Obtener todas las encuestas con detalles
